@@ -1,0 +1,22 @@
+Name = "default"
+Strategy = "Random"
+
+[Database]
+Username = "root"
+Password = "root"
+ConnMaxLifeTime = 1000
+MaxIdleConns = 5
+ConnMaxIdleTime = 1000
+DBDriver = "mysql"
+DBName = "app"
+DSNParams = "charset=utf8&timeout=90s&collation=utf8mb4_unicode_ci&interpolateParams=true"
+
+[[Database.Manual]]
+Name = "default"
+Host = "127.0.0.1"
+Port = 3306
+
+[[Database.Manual]]
+Name = "default"
+Host = "127.0.0.1"
+Port = 3306

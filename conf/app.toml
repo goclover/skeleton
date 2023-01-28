@@ -1,0 +1,15 @@
+# app.toml: 应用主配置文件,对应结构体为 bootstrap.Config
+# 应用名称，代码里可通过 env.AppName() 方法读取到
+AppName = "main"
+
+# 运行模式，可配置值：
+# debug    : 调试，
+# test     : 测试，
+# release  : 线上发布
+AppMode = "debug"
+
+# 逻辑 idc
+AppIDC = "default"
+
+[HTTPServer]
+Addr = ":8080"
