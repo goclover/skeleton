@@ -1,4 +1,4 @@
-module cashier
+module github.com/goclover/skeleton
 
 go 1.19
 

@@ -1,9 +1,9 @@
 package main
 
 import (
-	"cashier/boot"
 	"context"
 	"flag"
+	"github.com/goclover/skeleton/boot"
 )
 
 var cf = flag.String("c", "conf/app.toml", "Application configuration file")

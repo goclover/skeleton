@@ -1,10 +1,10 @@
 package boot
 
 import (
-	"cashier/httpsrv"
-	"cashier/library/resource"
 	"context"
 	"github.com/goclover/clover"
+	"github.com/goclover/skeleton/httpsrv"
+	"github.com/goclover/skeleton/library/resource"
 )
 
 func Start() {
