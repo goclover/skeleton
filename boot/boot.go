@@ -12,7 +12,7 @@ func Start() {
 
 	c.Group(httpsrv.Router)
 
-	_ = c.Run(cs.HTTPServer.Addr)
+	panic(c.Run(cs.HTTPServer.Addr))
 }
 
 func MustInit(ctx context.Context, _ *config) {
