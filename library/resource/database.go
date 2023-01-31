@@ -35,10 +35,14 @@ type dbConfig struct {
 }
 
 type gormInstances struct {
+	conf    string
 	Default *gorm.DB `database:"default"`
 }
 
-func initGORM(_ context.Context) error {
+func initGORM(_ context.Context, cf string) error {
+	//set config dir
+	instances.conf = cf
+
 	var dbsTyp = reflect.TypeOf(*instances)
 	var numFields = dbsTyp.NumField()
 	for {
@@ -47,7 +51,10 @@ func initGORM(_ context.Context) error {
 			break
 		}
 		var field = dbsTyp.Field(numFields)
-		var db, err = getInstance(field.Tag.Get("database"))
+		if field.Tag.Get("database") == "" {
+			continue
+		}
+		var db, err = getInstance(instances.conf, field.Tag.Get("database"))
 		if err != nil {
 			return err
 		}
@@ -56,10 +63,10 @@ func initGORM(_ context.Context) error {
 	return nil
 }
 
-func getInstance(srv string) (db *gorm.DB, err error) {
+func getInstance(cf, srv string) (db *gorm.DB, err error) {
 	var dc dbConfig
 	//write config for database sources
-	if dc, err = loadConfig(srv, "write"); err == nil {
+	if dc, err = loadConfig(cf, srv, "write"); err == nil {
 		var dsnList = getDSNList(dc)
 		if db, err = gorm.Open(mysql.Open(dsnList[0]), &gorm.Config{DryRun: false, Logger: nil}); err != nil {
 			return
@@ -70,7 +77,7 @@ func getInstance(srv string) (db *gorm.DB, err error) {
 		}
 
 		//read config for database replicas
-		if dc, err = loadConfig(srv, "read"); err != nil {
+		if dc, err = loadConfig(cf, srv, "read"); err != nil {
 			return
 		}
 		for _, v := range dsnList {
@@ -86,8 +93,8 @@ func getInstance(srv string) (db *gorm.DB, err error) {
 	return
 }
 
-func loadConfig(srv, tpl string) (dc dbConfig, err error) {
-	if _, err = toml.DecodeFile(fmt.Sprintf("conf/database/%s_%s.toml", srv, tpl), &dc); err != nil {
+func loadConfig(cf, srv, tpl string) (dc dbConfig, err error) {
+	if _, err = toml.DecodeFile(fmt.Sprintf("%s/database/%s_%s.toml", cf, srv, tpl), &dc); err != nil {
 		return
 	}
 	if len(dc.Database.Manual) <= 0 {
