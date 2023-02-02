@@ -40,7 +40,7 @@ func initRedis(ctx context.Context, cd string) (err error) {
 		if field.Tag.Get("redis") == "" {
 			continue
 		}
-		var ins, err = getRedisInstance(dbInstance.conf, field.Tag.Get("redis"))
+		var ins, err = getRedisInstance(redisInstance.conf, field.Tag.Get("redis"))
 		if err != nil {
 			return err
 		}
