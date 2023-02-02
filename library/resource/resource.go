@@ -9,6 +9,7 @@ var (
 	once      = sync.Once{}
 	initFuncs = []initFunc{
 		initGORM,
+		initRedis,
 	}
 	// Conf configuration dir
 	Conf = "conf"

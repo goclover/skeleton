@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-var instances = &gormInstances{}
+var dbInstance = &gormInstances{}
 
 type dbConfig struct {
 	Name     string `toml:"Name"`
@@ -41,9 +41,9 @@ type gormInstances struct {
 
 func initGORM(_ context.Context, cf string) error {
 	//set config dir
-	instances.conf = cf
+	dbInstance.conf = cf
 
-	var dbsTyp = reflect.TypeOf(*instances)
+	var dbsTyp = reflect.TypeOf(*dbInstance)
 	var numFields = dbsTyp.NumField()
 	for {
 		numFields--
@@ -54,11 +54,11 @@ func initGORM(_ context.Context, cf string) error {
 		if field.Tag.Get("database") == "" {
 			continue
 		}
-		var db, err = getInstance(instances.conf, field.Tag.Get("database"))
+		var db, err = getInstance(dbInstance.conf, field.Tag.Get("database"))
 		if err != nil {
 			return err
 		}
-		reflect.ValueOf(instances).Elem().FieldByName(field.Name).Set(reflect.ValueOf(db))
+		reflect.ValueOf(dbInstance).Elem().FieldByName(field.Name).Set(reflect.ValueOf(db))
 	}
 	return nil
 }
@@ -126,5 +126,5 @@ func getDSNList(c dbConfig) (dsn []string) {
 }
 
 func GetGORM() *gormInstances {
-	return instances
+	return dbInstance
 }
