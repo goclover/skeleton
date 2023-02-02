@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
+	"strings"
+
 	"github.com/BurntSushi/toml"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/plugin/dbresolver"
-	"reflect"
-	"strings"
 )
 
 var dbInstance = &gormInstances{}
@@ -35,13 +36,12 @@ type dbConfig struct {
 }
 
 type gormInstances struct {
-	conf    string
+	confDir string
 	Default *gorm.DB `database:"default"`
 }
 
-func initGORM(_ context.Context, cf string) error {
-	//set config dir
-	dbInstance.conf = cf
+func initGORM(_ context.Context, cd string) error {
+	dbInstance.confDir = cd
 
 	var dbsTyp = reflect.TypeOf(*dbInstance)
 	var numFields = dbsTyp.NumField()
@@ -54,7 +54,7 @@ func initGORM(_ context.Context, cf string) error {
 		if field.Tag.Get("database") == "" {
 			continue
 		}
-		var db, err = getInstance(dbInstance.conf, field.Tag.Get("database"))
+		var db, err = getDBInstance(dbInstance.confDir, field.Tag.Get("database"))
 		if err != nil {
 			return err
 		}
@@ -63,10 +63,10 @@ func initGORM(_ context.Context, cf string) error {
 	return nil
 }
 
-func getInstance(cf, srv string) (db *gorm.DB, err error) {
+func getDBInstance(cf, srv string) (db *gorm.DB, err error) {
 	var dc dbConfig
 	//write config for database sources
-	if dc, err = loadConfig(cf, srv, "write"); err == nil {
+	if dc, err = loadDBConfig(cf, srv, "write"); err == nil {
 		var dsnList = getDSNList(dc)
 		if db, err = gorm.Open(mysql.Open(dsnList[0]), &gorm.Config{DryRun: false, Logger: nil}); err != nil {
 			return
@@ -77,9 +77,10 @@ func getInstance(cf, srv string) (db *gorm.DB, err error) {
 		}
 
 		//read config for database replicas
-		if dc, err = loadConfig(cf, srv, "read"); err != nil {
+		if dc, err = loadDBConfig(cf, srv, "read"); err != nil {
 			return
 		}
+		dsnList = getDSNList(dc)
 		for _, v := range dsnList {
 			replicas = append(replicas, mysql.Open(v))
 		}
@@ -93,21 +94,21 @@ func getInstance(cf, srv string) (db *gorm.DB, err error) {
 	return
 }
 
-func loadConfig(cf, srv, tpl string) (dc dbConfig, err error) {
+func loadDBConfig(cf, srv, tpl string) (dc dbConfig, err error) {
 	if _, err = toml.DecodeFile(fmt.Sprintf("%s/database/%s_%s.toml", cf, srv, tpl), &dc); err != nil {
 		return
 	}
 	if len(dc.Database.Manual) <= 0 {
-		err = errors.New(fmt.Sprintf("database config (%s) has empty manual", srv))
+		err = fmt.Errorf("database config (%s) has empty manual", srv)
 	}
 	if strings.TrimSpace(dc.Database.DBDriver) == "" {
 		err = errors.New("db driver is empty")
 	}
 	if strings.ToLower(dc.Database.DBDriver) != "mysql" {
-		err = errors.New(fmt.Sprintf("db driver (%s) is unsupport", dc.Database.DBDriver))
+		err = fmt.Errorf("db driver (%s) is unsupport", dc.Database.DBDriver)
 	}
 	if len(dc.Database.Manual) <= 0 {
-		err = errors.New(fmt.Sprintf("invalid database manual srv (%s)", srv))
+		err = fmt.Errorf("invalid database manual srv (%s)", srv)
 		return
 	}
 	return
